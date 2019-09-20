@@ -4,7 +4,7 @@ PATH=$PWD:$HOME/bin:$PATH
 
 export QBO_SANDBOX=nextapp-
 INBOX=$HOME/gmail; cd $INBOX
-EMAIL="mckenna5d@verizon.net,glmck13@verizon.net"
+EMAIL="user1@email.com,user2@email.com"
 
 o2Refresh.sh
 
