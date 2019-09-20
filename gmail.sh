@@ -4,7 +4,7 @@ PATH=$PWD:$HOME/bin:$PATH
 
 export QBO_SANDBOX=nextapp-
 INBOX=$HOME/gmail; cd $INBOX
-EMAIL="user1@email.com,user2@email.com"
+EMAIL="mckenna5d@verizon.net,glmck13@verizon.net"
 
 o2Refresh.sh
 
@@ -13,7 +13,7 @@ gmail.py | while read sheet
 do
 	salesReceipt.sh $sheet | tr ',' '\n' | grep TotalAmt | read response
 	message+="$sheet:${response##*:}\r"
-	rm -f $sheet
+	#rm -f $sheet
 done
 
 export TERM=xterm

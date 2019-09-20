@@ -1,27 +1,60 @@
 #!/bin/ksh
 
-XlsFile=${1:?}
-TxtFile=${XlsFile%.*}.txt
+xls=${1:?} txt=${xls%.*}.txt
 export QBO_ITEMS=$HOME/etc/qboItems.csv
 export QBO_SANDBOX=nextapp-
 
-trap "rm -f $TxtFile" HUP INT QUIT TERM EXIT
+trap "rm -f $txt" HUP INT QUIT TERM EXIT
 
-ssconvert -O 'quoting-mode=never separator=| format=preserve charset=ascii' $XlsFile $TxtFile 2>/dev/null
+ssconvert -O 'quoting-mode=never separator=| format=preserve charset=ascii' $xls $txt 2>/dev/null
 
-txndate=$(grep "^|||||.*, .*, .*|||||" $TxtFile) txndate=${txndate//\|/}
+delim=""
+
 (
-	cat - <<-EOF
-	{
-	"TxnDate": "$(date --date="$txndate" "+%Y-%m-%d")",
-	"Line": [
-	EOF
+print "{"
 
-	delim=""
+while IFS='|' read qty desc x x amt dow x brk tot brkamt totamt x
+do
+	if [[ "$dow" == *,*,* ]]; then
+		print '"TxnDate":' \"$(date --date="$dow" "+%Y-%m-%d")\", '"Line": ['
+		qty=""
 
-	grep '^[[:digit:]]\+|' $TxtFile | while IFS='|' read qty desc x x amt x
-	do
-		[ "$qty" -le 0 ] && continue
+	elif [[ "$totamt" == Page* ]]; then
+		print ']'
+		qty=""
+
+	elif expr "$qty" : "^[[:digit:]]\+$" >/dev/null; then
+		[ "$qty" -le 0 ] && qty=""
+
+	elif [[ "$tot" == Services\ Sub\ Total ]]; then
+		amt=$totamt amt=${amt#$} amt=${amt// /}
+		if [[ "$amt" == 0* ]]; then
+			qty=""
+		else
+			desc="$tot" qty="1"
+		fi
+
+	elif [[ "$brk" == Deposits* ]]; then
+		if [[ "$brkamt" == 0* ]]; then
+			qty=""
+		elif [[ "$brk" == *Used ]]; then
+			amt="-$brkamt" desc="$brk" qty="1"
+		else
+			amt="$brkamt" desc="$brk" qty="1"
+		fi
+
+	elif [[ "$brk" == @(Sales\ Tax|Paid\ On\ Account) ]]; then
+		if [[ "$brkamt" == 0* ]]; then
+			qty=""
+		else
+			amt="$brkamt" desc="$brk" qty="1"
+		fi
+
+	else
+		qty=""
+	fi
+
+	if [ "$qty" ]; then
 		grep -F "$desc|" $QBO_ITEMS | IFS='|' read x item val
 		[ ! "$item" ] && item="$desc"
 		[ "$delim" ] && print ","
@@ -40,10 +73,9 @@ txndate=$(grep "^|||||.*, .*, .*|||||" $TxtFile) txndate=${txndate//\|/}
 		}
 		EOF
 		delim="y"
-	done
+	fi
 
-	cat - <<-EOF
-	]
-	}
-	EOF
-) | qbo.sh POST '/company/$QBO_REALMID/salesreceipt'
+done <$txt
+
+print "}"
+) | tee ${xls%.*}-req.json | qbo.sh POST '/company/$QBO_REALMID/salesreceipt' | tee ${xls%.*}-rsp.json
