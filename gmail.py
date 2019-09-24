@@ -16,4 +16,5 @@ if msg.is_multipart():
             fd.write(part.get_payload(decode=True))
             fd.close()
 
-print ('\n'.join(flist))
+print msg["From"]
+print '\n'.join(flist)
