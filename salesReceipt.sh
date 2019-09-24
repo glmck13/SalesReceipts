@@ -1,12 +1,12 @@
 #!/bin/ksh
 
-xls=${1:?} txt=${xls%.*}.txt
+xls="${1:?}" txt="${xls// /-}" txt=${txt%.*}.txt
 export QBO_ITEMS=$HOME/etc/qboItems.csv
 export QBO_SANDBOX=nextapp-
 
 trap "rm -f $txt" HUP INT QUIT TERM EXIT
 
-ssconvert -O 'quoting-mode=never separator=| format=preserve charset=ascii' $xls $txt 2>/dev/null
+ssconvert -O 'quoting-mode=never separator=| format=preserve charset=ascii' "$xls" "$txt" 2>/dev/null
 
 delim=""
 
@@ -78,4 +78,4 @@ do
 done <$txt
 
 print "}"
-) | tee ${xls%.*}-req.json | qbo.sh POST '/company/$QBO_REALMID/salesreceipt' | tee ${xls%.*}-rsp.json
+) | tee ${txt%.*}-req.json | qbo.sh POST '/company/$QBO_REALMID/salesreceipt' | tee ${txt%.*}-rsp.json
