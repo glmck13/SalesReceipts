@@ -6,17 +6,21 @@ export QBO_SANDBOX=nextapp-
 INBOX=$HOME/gmail; cd $INBOX
 email=""
 
-o2Refresh.sh
+o2Refresh.sh >/dev/null
 
-message=""
+subject="Sales Receipts" message=""
+
 gmail.py | while read sheet
 do
 	if [ ! "$sheet" ]; then
 		:
 
 	elif [[ "$sheet" == *@* ]]; then
+		addr="$sheet"
+		addr=${addr#*<} addr=${addr%>*}
+		addr=$(print "$addr" | sed -e 's/[-() "]//g')
 		[ "$email" ] && email+=","
-		email+="$sheet"
+		email+="$addr"
 
 	else
 		salesReceipt.sh "$sheet" | tr ',' '\n' | grep TotalAmt | read response
@@ -25,13 +29,4 @@ do
 	fi
 done
 
-if [ "$message" ]; then
-export TERM=xterm
-expect >/dev/null <<EOF
-set timeout 120
-spawn alpine "$email"
-expect "To AddrBk"
-send "Sales Receipts\r$message\rY"
-expect "Alpine finished"
-EOF
-fi
+sendsms.sh "$email" "$subject" "$message"
