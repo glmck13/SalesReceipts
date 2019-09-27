@@ -1,5 +1,7 @@
 #!/bin/ksh
 
+PATH=$PWD:$HOME/bin:/usr/local/bin:$PATH
+
 xls="${1:?}" txt="${xls// /-}" txt=${txt%.*}.txt
 export QBO_ITEMS=$HOME/etc/qboItems.csv
 export QBO_SANDBOX=nextapp-
