@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-PATH=$PWD:$HOME/bin:$PATH
+PATH=$PWD:$HOME/bin:/usr/local/bin:$PATH
 
 export QBO_SANDBOX=nextapp-
 INBOX=$HOME/gmail; cd $INBOX
