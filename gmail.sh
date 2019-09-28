@@ -3,11 +3,11 @@
 PATH=$PWD:$HOME/bin:/usr/local/bin:$PATH
 
 INBOX=$HOME/gmail; cd $INBOX
-email=""
+email="mckenna5d@verizon.net,glmck13@verizon.net"
 
 o2Refresh.sh >/dev/null
 
-subject="Sales Receipts" message=""
+addr="" subject="Sales Receipts" message="" attach=""
 
 gmail.py | while read sheet
 do
@@ -18,14 +18,14 @@ do
 		addr="$sheet"
 		addr=${addr#*<} addr=${addr%>*}
 		addr=$(print "$addr" | sed -e 's/[-() "]//g')
-		[ "$email" ] && email+=","
-		email+="$addr"
 
 	else
 		salesReceipt.sh "$sheet" | tr ',' '\n' | grep TotalAmt | read response
 		message+="$sheet:${response##*:}\r"
-		#rm -f $sheet
+		[ "$attach" ] && attach+=", "
+		attach+="./$sheet"
 	fi
 done
 
-sendsms.sh "$email" "$subject" "$message"
+[ "$addr" ] && sendaway.sh "$addr" "$subject" "$message"
+[ "$email" ] && sendaway.sh "$email" "$subject" "$message" "$attach"
