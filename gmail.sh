@@ -3,7 +3,7 @@
 PATH=$PWD:$HOME/bin:/usr/local/bin:$PATH
 
 INBOX=$HOME/gmail; cd $INBOX
-email="mckenna5d@verizon.net,glmck13@verizon.net"
+email=""
 
 o2Refresh.sh >/dev/null
 
