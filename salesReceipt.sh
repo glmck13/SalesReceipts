@@ -14,7 +14,7 @@ delim=""
 (
 print "{"
 
-while IFS='|' read qty desc x x amt dow x brk tot brkamt totamt x
+while IFS='|' read qty desc xamt x amt dow x brk tot brkamt totamt x
 do
 	if [[ "$dow" == *,*,* ]]; then
 		print '"TxnDate":' \"$(date --date="$dow" "+%Y-%m-%d")\", '"Line": ['
@@ -27,16 +27,23 @@ do
 	elif expr "$qty" : "^[[:digit:]]\+$" >/dev/null; then
 		[ "$qty" -le 0 ] && qty=""
 
+	elif [[ "$desc" == On\ Account: ]]; then
+		if [[ "$xamt" == 0.00 ]]; then
+			qty=""
+		else
+			amt="-$xamt" qty="1"
+		fi
+
 	elif [[ "$tot" == Services\ Sub\ Total ]]; then
 		amt=$totamt amt=${amt#$} amt=${amt// /}
-		if [[ "$amt" == 0* ]]; then
+		if [[ "$amt" == 0.00 ]]; then
 			qty=""
 		else
 			desc="$tot" qty="1"
 		fi
 
 	elif [[ "$brk" == Deposits* ]]; then
-		if [[ "$brkamt" == 0* ]]; then
+		if [[ "$brkamt" == 0.00 ]]; then
 			qty=""
 		elif [[ "$brk" == *Used ]]; then
 			amt="-$brkamt" desc="$brk" qty="1"
@@ -45,7 +52,7 @@ do
 		fi
 
 	elif [[ "$brk" == @(Sales\ Tax|Paid\ On\ Account) ]]; then
-		if [[ "$brkamt" == 0* ]]; then
+		if [[ "$brkamt" == 0.00 ]]; then
 			qty=""
 		else
 			amt="$brkamt" desc="$brk" qty="1"
@@ -56,7 +63,8 @@ do
 	fi
 
 	if [ "$qty" ]; then
-		grep -F "$desc|" $QBO_ITEMS | IFS='|' read x item val
+		grep -F "|$desc|" $QBO_ITEMS | IFS='|' read x x item val
+		[[ "$desc" && "$val" ]] || print "No value for: $desc" >&2
 		[ ! "$item" ] && item="$desc"
 		[ "$delim" ] && print ","
 		cat - <<-EOF

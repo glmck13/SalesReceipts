@@ -2,8 +2,8 @@
 
 PATH=$PWD:$HOME/bin:/usr/local/bin:$PATH
 
-INBOX=$HOME/gmail; cd $INBOX
-email=""
+INBOX=$HOME/gmail; cd $INBOX; exec 2>err.txt
+email="mckenna5d@verizon.net,glmck13@verizon.net"
 
 o2Refresh.sh >/dev/null
 
@@ -26,6 +26,8 @@ do
 		attach+="./$sheet"
 	fi
 done
+
+[ -s err.txt ] && message+="\r----------\r"$(sed -e "s/$/\\\\r/" <err.txt)"----------\r"
 
 [ "$addr" ] && sendaway.sh "$addr" "$subject" "$message"
 [ "$email" ] && sendaway.sh "$email" "$subject" "$message" "$attach"
