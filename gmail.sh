@@ -27,7 +27,7 @@ do
 	fi
 done
 
-[ -s err.txt ] && message+="\r----------\r"$(sed -e "s/$/\\\\r/" <err.txt)"----------\r"
+[ -s err.txt ] && message+="\r----------\r"$(sed -e 's/\$/\\&/g' -e 's/$/\\r/g' <err.txt)"----------\r"
 
 [ "$addr" ] && sendaway.sh "$addr" "$subject" "$message"
 [ "$email" ] && sendaway.sh "$email" "$subject" "$message" "$attach"
